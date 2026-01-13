@@ -1,6 +1,0 @@
-framework module flutter_avif_ios {
-  umbrella header "flutter_avif_ios-umbrella.h"
-
-  export *
-  module * { export * }
-}
