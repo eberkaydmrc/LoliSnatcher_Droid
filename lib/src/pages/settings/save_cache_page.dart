@@ -309,32 +309,13 @@ class _SaveCachePageState extends State<SaveCachePage> {
                 action: () async {
                   //String url = await ServiceHandler.setExtDir();
 
-                  if (Platform.isAndroid) {
+                  if (Platform.isAndroid || Platform.isIOS) {
                     final String newPath = await ServiceHandler.setExtDir();
-                    extPathOverride = newPath;
-                    setState(() {});
-                    // TODO Store uri in settings and make another button so can set seetings dir and pictures dir
+                    if (newPath.isNotEmpty) {
+                      extPathOverride = newPath;
+                      setState(() {});
+                    }
                   } else {
-                    // TODO need to update dir picker to work on desktop
-                    // String? value;
-                    // if(settingsHandler.appMode.value.isDesktop) {
-                    //   value = await showDialog(
-                    //     context: context,
-                    //     builder: (BuildContext context) {
-                    //       return Dialog(
-                    //         child: SizedBox(
-                    //           width: 500,
-                    //           child: DirPicker(path),
-                    //         ),
-                    //       );
-                    //     },
-                    //   );
-                    // } else {
-                    // TODO remove this Get
-                    //   value = await Get.to(() => DirPicker(path))!;
-                    // }
-                    // setPath(value ?? "");
-
                     FlashElements.showSnackbar(
                       context: context,
                       title: const Text(

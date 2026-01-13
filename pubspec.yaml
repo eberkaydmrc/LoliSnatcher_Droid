@@ -48,6 +48,8 @@ dependencies:
       ref: 52759af6c6b245db4ba5bfa9ccc64d74f3ceb2fb
   font_awesome_flutter: ^10.10.0
   fpdart: ^1.1.1
+  file_picker: ^8.0.0
+
   fvp: ^0.33.1
   get_it: ^8.2.0
   get: ^5.0.0-release-candidate-9.3.2 # ^4.7.2
@@ -60,10 +62,7 @@ dependencies:
   huge_listview: ^2.0.12
   image: ^4.5.4
   intl: ^0.20.2
-  keyboard_actions: # ^4.2.0
-    git:
-      url: https://github.com/coffeebeats/flutter_keyboard_actions.git
-      ref: c4ba001e441f3d69baedfb6613e857e11e8c2c40 # master
+  keyboard_actions: ^4.2.0
   lemberfpsmonitor: ^0.0.3+6
   local_auth: ^2.3.0
   material_color_utilities: ^0.13.0
@@ -121,7 +120,8 @@ dev_dependencies:
 
 flutter_launcher_icons:
   android: true
-  image_path: "assets/images/iconFG.png"
+  ios: true
+  image_path: "assets/images/app_icon.png"
   image_path_android: "assets/images/app_icon.png"
   adaptive_icon_background: "assets/images/iconBG.png"
   adaptive_icon_foreground: "assets/images/iconFG.png"

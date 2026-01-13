@@ -72,11 +72,13 @@ Future<bool> showStorageNeedsUpdateDialog() async {
               icon: const Icon(Icons.settings),
               onPressed: () async {
                 SettingsHandler.instance.extPathOverride = '';
-                if (Platform.isAndroid) {
+                if (Platform.isAndroid || Platform.isIOS) {
                   final String newPath = await ServiceHandler.setExtDir();
-                  SettingsHandler.instance.extPathOverride = newPath;
-                  await SettingsHandler.instance.saveSettings(restate: false);
-                  Navigator.of(context).pop(true);
+                  if (newPath.isNotEmpty) {
+                    SettingsHandler.instance.extPathOverride = newPath;
+                    await SettingsHandler.instance.saveSettings(restate: false);
+                    Navigator.of(context).pop(true);
+                  }
                 } else {
                   FlashElements.showSnackbar(
                     context: context,

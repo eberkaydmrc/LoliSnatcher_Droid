@@ -4,7 +4,9 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:vibration/vibration.dart';
 
 import 'package:lolisnatcher/src/handlers/settings_handler.dart';
@@ -62,7 +64,13 @@ class ServiceHandler {
       } else if (Platform.isWindows) {
         result = Platform.environment['LOCALAPPDATA']!;
       } else if (Platform.isIOS) {
-        result = (await getApplicationDocumentsDirectory()).path;
+        // Try getting path from native (which might be the bookmark path)
+        final String? nativePath = await platform.invokeMethod('getExtPath');
+        if (nativePath != null && nativePath.isNotEmpty) {
+          result = nativePath;
+        } else {
+          result = (await getApplicationDocumentsDirectory()).path;
+        }
       }
     } catch (e) {
       log(e);
@@ -73,8 +81,16 @@ class ServiceHandler {
   static Future<String> setExtDir() async {
     String result = '';
     try {
-      result = await platform.invokeMethod('setExtPath');
-      log('Service handler got uri back: $result');
+      if (Platform.isAndroid) {
+        result = await platform.invokeMethod('setExtPath');
+        log('Service handler got uri back: $result');
+      } else if (Platform.isIOS) {
+        final String? path = await FilePicker.platform.getDirectoryPath();
+        if (path != null) {
+          await platform.invokeMethod('saveIOSBookmark', {'path': path});
+          result = path;
+        }
+      }
     } catch (e) {
       log(e);
     }
@@ -85,8 +101,10 @@ class ServiceHandler {
   static Future<String> getImageSAFUri() async {
     String result = '';
     try {
-      result = await platform.invokeMethod('selectImage');
-      log('Service handler got uri back: $result');
+      if (Platform.isAndroid) {
+        result = await platform.invokeMethod('selectImage');
+        log('Service handler got uri back: $result');
+      }
     } catch (e) {
       log(e);
     }
@@ -97,7 +115,14 @@ class ServiceHandler {
   static Future<Uint8List?> getSAFFile(String contentUri) async {
     Uint8List? result;
     try {
-      result = await platform.invokeMethod('getFileBytes', {'uri': contentUri});
+      if (Platform.isAndroid) {
+        result = await platform.invokeMethod('getFileBytes', {'uri': contentUri});
+      } else if (Platform.isIOS) {
+        final File file = File(contentUri);
+        if (await file.exists()) {
+          result = await file.readAsBytes();
+        }
+      }
       log('Got file back');
     } catch (e) {
       log(e);
@@ -287,7 +312,7 @@ class ServiceHandler {
     } else if (Platform.isWindows) {
       result = '${await getExtDir()}/LoliSnatcher/config/';
     } else if (Platform.isIOS) {
-      result = '${await getExtDir()}/LoliSnatcher/config/';
+      result = '${(await getApplicationDocumentsDirectory()).path}/config/';
     }
     return result;
   }
@@ -343,7 +368,7 @@ class ServiceHandler {
       } else if (Platform.isWindows) {
         result = '${await getExtDir()}/LoliSnatcher/cache/';
       } else if (Platform.isIOS) {
-        result = '${await getExtDir()}/LoliSnatcher/cache/';
+        result = '${(await getApplicationDocumentsDirectory()).path}/cache/';
       }
     } catch (e) {
       log(e);
@@ -351,9 +376,13 @@ class ServiceHandler {
     return result;
   }
 
-  static Future<void> loadShareTextIntent(String text) async {
+  static Future<void> loadShareTextIntent(String text, {Rect? sharePositionOrigin}) async {
     try {
-      await platform.invokeMethod('shareText', {'text': text});
+      if (Platform.isIOS) {
+        await Share.share(text, sharePositionOrigin: sharePositionOrigin);
+      } else {
+        await platform.invokeMethod('shareText', {'text': text});
+      }
       return;
     } catch (e) {
       log(e);
@@ -365,16 +394,25 @@ class ServiceHandler {
     String filePath,
     String mimeType, {
     String? text,
+    Rect? sharePositionOrigin,
   }) async {
     try {
-      await platform.invokeMethod(
-        'shareFile',
-        {
-          'path': filePath,
-          'mimeType': mimeType,
-          if (text != null) 'text': text,
-        },
-      );
+      if (Platform.isIOS) {
+        await Share.shareXFiles(
+          [XFile(filePath, mimeType: mimeType)],
+          text: text,
+          sharePositionOrigin: sharePositionOrigin,
+        );
+      } else {
+        await platform.invokeMethod(
+          'shareFile',
+          {
+            'path': filePath,
+            'mimeType': mimeType,
+            if (text != null) 'text': text,
+          },
+        );
+      }
       return;
       // log('share closed');
     } catch (e) {

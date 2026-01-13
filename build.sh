@@ -3,7 +3,7 @@
 source scripts/select.sh
 
 selected_item=0
-menu_items=("Testing" "Github" "Store")
+menu_items=("Testing" "Github" "Store" "iOS_Testing")
 title="Select a build type (arrow keys to select, enter to confirm):"
 
 if [ -z "$1" ]; then
@@ -19,6 +19,9 @@ else
             ;;
         "store" | "release")
             menu_result=2
+            ;;
+        "iostesting" | "iostest")
+            menu_result=3
             ;;
         *)
             echo "Invalid option: $1" >&2
@@ -52,6 +55,13 @@ in
         build_mode="appbundle"
         suffix="store"
         ;;
+    3)
+        build_arg="LS_IS_STORE=false"
+        build_desc="iOS Testing (no codesign)"
+        build_mode="ios"
+        build_extras="$build_extras --release --no-codesign"
+        suffix="test"
+        ;;
 esac
 
 clear
@@ -74,7 +84,7 @@ if [ "$fvmAvailalble" = true ]; then
         exit 1
     fi
 else
-    if flutter pub get && flutter build $build_mode --release --dart-define=$build_arg $build_extras ; then
+    if flutter pub get && flutter build $build_mode --dart-define=$build_arg $build_extras ; then
         echo "Build succeeded"
     else
         echo "Build failed"
@@ -89,6 +99,31 @@ get_version_and_build() {
     build="${version_build_array[1]}"
 }
 get_version_and_build
+
+if [ "$build_mode" = "ios" ]; then
+    mkdir "build/ios/iphoneos/Payload"
+    mv "build/ios/iphoneos/Runner.app" "build/ios/iphoneos/Payload"
+
+    # Change current dir to iphoneos folder when zipping Payload to make IPA in order to avoid directory tree inside IPA being messed up
+    previous_wd=$PWD
+    cd "build/ios/iphoneos"
+    zip -r "Runner.ipa" "Payload"
+    cd $previous_wd
+
+    src_ipa="build/ios/iphoneos/Runner.ipa"
+
+    # create release folder if it doesn't exist
+    if [ ! -d "build/ios/iphoneos/release" ]; then
+        mkdir "build/ios/iphoneos/release"
+    fi
+
+    dest_ipa="build/ios/iphoneos/release/LoliSnatcher_${version}_${build}_${suffix}.ipa"
+    cp "$src_ipa" "$dest_ipa"
+
+    echo
+    echo "=> Built IPA: LoliSnatcher_${version}_${build}_${suffix}.ipa"
+    exit 0
+fi
 
 if [ "$build_mode" = "appbundle" ]; then
     src_aab="build/app/outputs/bundle/release/app-release.aab"

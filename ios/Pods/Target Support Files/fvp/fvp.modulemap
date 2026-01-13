@@ -1,0 +1,6 @@
+framework module fvp {
+  umbrella header "fvp-umbrella.h"
+
+  export *
+  module * { export * }
+}

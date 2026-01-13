@@ -43,9 +43,11 @@ class SearchHandler {
   SearchHandler() {
     _volumeStreamController = Platform.isAndroid ? StreamController.broadcast() : null;
     _scrollStream = StreamController.broadcast();
-    _rootVolumeListener = volumeKeyChannel?.receiveBroadcastStream().listen((event) {
-      _volumeStreamController?.sink.add(event);
-    });
+    if (volumeKeyChannel != null) {
+      _rootVolumeListener = volumeKeyChannel!.receiveBroadcastStream().listen((event) {
+        _volumeStreamController?.sink.add(event);
+      });
+    }
   }
   // alternative way to get instance of the controller
   // i.e. "SearchHandler.to.tabs" instead of "Get.find<SearchHandler>().tabs"

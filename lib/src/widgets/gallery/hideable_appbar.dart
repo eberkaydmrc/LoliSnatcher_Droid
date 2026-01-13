@@ -752,8 +752,10 @@ class _HideableAppBarState extends State<HideableAppBar> {
         leadingIcon: Icons.copy,
         sideColor: Colors.green,
       );
-    } else if (Platform.isAndroid) {
-      ServiceHandler.loadShareTextIntent(text);
+    } else if (Platform.isAndroid || Platform.isIOS) {
+      final Size size = MediaQuery.sizeOf(context);
+      final Rect shareOrigin = Rect.fromLTWH(size.width / 2, size.height / 2, 1, 1);
+      ServiceHandler.loadShareTextIntent(text, sharePositionOrigin: shareOrigin);
     }
   }
 
@@ -920,12 +922,15 @@ class _HideableAppBarState extends State<HideableAppBar> {
     // TODO delete from cache after share window closes
 
     if (path != null) {
-      if (Platform.isAndroid) {
+      if (Platform.isAndroid || Platform.isIOS) {
         // File is already in cache - share from there
+        final Size size = MediaQuery.sizeOf(context);
+        final Rect shareOrigin = Rect.fromLTWH(size.width / 2, size.height / 2, 1, 1);
         await ServiceHandler.loadShareFileIntent(
           path,
           '${item.mediaType.value.isVideo ? 'video' : 'image'}/${item.fileExt!}',
           text: text,
+          sharePositionOrigin: shareOrigin,
         );
       }
     } else {
@@ -981,11 +986,14 @@ class _HideableAppBarState extends State<HideableAppBar> {
       );
       if (await cacheFile.exists()) {
         path = cacheFile.path;
-        if (Platform.isAndroid) {
+        if (Platform.isAndroid || Platform.isIOS) {
+          final Size size = MediaQuery.sizeOf(context);
+          final Rect shareOrigin = Rect.fromLTWH(size.width / 2, size.height / 2, 1, 1);
           await ServiceHandler.loadShareFileIntent(
             path,
             '${item.mediaType.value.isVideo ? 'video' : 'image'}/${item.fileExt!}',
             text: text,
+            sharePositionOrigin: shareOrigin,
           );
         }
       } else {
